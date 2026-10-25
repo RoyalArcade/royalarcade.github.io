@@ -5,11 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Sky Burst | RoyalArcade</title>
 
+<!-- iOS & WebApp Standalone Mode -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+
 <!-- Social Preview Meta Tags for Instagram & WhatsApp -->
 <meta property="og:title" content="Sky Burst: Starling Rush 🚀 | RoyalArcade" />
 <meta property="og:description" content="Tap to burst the flock before time runs out! Can you beat the RoyalArcade high score?" />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://royalarcade.github.io" />
+<meta property="og:image" content="https://royalarcade.github.io/preview.png" />
 
 <style>
   :root {
@@ -23,6 +29,7 @@
     box-sizing: border-box;
     user-select: none;
     -webkit-user-select: none;
+    -webkit-touch-callout: none;
     margin: 0;
     padding: 0;
     touch-action: none;
@@ -31,6 +38,7 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+    overscroll-behavior: none; /* Stops accidental mobile pull-to-refresh */
     background: #0d0618;
     font-family: 'Fredoka', 'Nunito', 'Segoe UI', system-ui, -apple-system, sans-serif;
     display: flex;
@@ -54,25 +62,31 @@
     display: block;
     cursor: crosshair;
   }
-  /* Modern Glassmorphic HUD */
+  /* Modern Glassmorphic In-Game HUD */
   #hud {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    padding: 14px 18px;
+    padding: 12px 14px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     pointer-events: none;
     z-index: 10;
   }
+  .hud-group {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    pointer-events: auto;
+  }
   .hud-badge {
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(8px);
     border: 2px solid rgba(255, 255, 255, 0.25);
-    border-radius: 20px;
-    padding: 6px 14px;
+    border-radius: 18px;
+    padding: 5px 12px;
     color: #fff;
     display: flex;
     flex-direction: column;
@@ -80,16 +94,66 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.25);
   }
   .hud-label {
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 800;
     letter-spacing: 1px;
     color: #FFD700;
     text-shadow: 0 1px 2px rgba(0,0,0,0.6);
   }
   .hud-val {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 900;
     text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  }
+  /* Bouncing Streak Flame Badge */
+  #streak-badge {
+    background: linear-gradient(135deg, rgba(255, 102, 0, 0.4), rgba(255, 51, 102, 0.5));
+    border: 2px solid #FF8800;
+    border-radius: 18px;
+    padding: 5px 10px;
+    color: #FFF;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    box-shadow: 0 0 14px rgba(255, 136, 0, 0.6);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  #streak-badge.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.8);
+  }
+  .streak-pulse {
+    animation: streakAnim 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes streakAnim {
+    0% { transform: scale(0.9); }
+    50% { transform: scale(1.22); }
+    100% { transform: scale(1.0); }
+  }
+  /* In-Game Action Buttons (Mute & Restart) */
+  .hud-btn {
+    background: rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(8px);
+    border: 2px solid rgba(255, 255, 255, 0.28);
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: transform 0.15s, background 0.2s;
+  }
+  .hud-btn:active {
+    transform: scale(0.88);
+    background: rgba(255, 255, 255, 0.3);
   }
   #timer-badge.urgent {
     background: rgba(255, 40, 80, 0.45);
@@ -98,7 +162,7 @@
   }
   @keyframes urgentPulse {
     from { transform: scale(1); }
-    to { transform: scale(1.12); }
+    to { transform: scale(1.1); }
   }
   /* Translucent Glass Screens Overlay so Opening Birds are Visible */
   .screen-overlay {
@@ -276,17 +340,33 @@
 
   <!-- Live In-Game HUD -->
   <div id="hud">
-    <div class="hud-badge" id="score-badge">
-      <span class="hud-label">SCORE</span>
-      <span class="hud-val" id="hud-score">0</span>
+    <!-- Left Group: Score + Dynamic Streak Flame -->
+    <div class="hud-group">
+      <div class="hud-badge" id="score-badge">
+        <span class="hud-label">SCORE</span>
+        <span class="hud-val" id="hud-score">0</span>
+      </div>
+      <div id="streak-badge" class="hidden">
+        <span>🔥</span><span id="streak-val">x2</span>
+      </div>
     </div>
-    <div class="hud-badge" id="flock-badge">
-      <span class="hud-label">FLOCK</span>
-      <span class="hud-val" id="hud-flock">5</span>
+
+    <!-- Center Group: Flock count + Match Timer -->
+    <div class="hud-group">
+      <div class="hud-badge" id="flock-badge">
+        <span class="hud-label">FLOCK</span>
+        <span class="hud-val" id="hud-flock">5</span>
+      </div>
+      <div class="hud-badge" id="timer-badge">
+        <span class="hud-label">TIME</span>
+        <span class="hud-val" id="hud-time">60</span>
+      </div>
     </div>
-    <div class="hud-badge" id="timer-badge">
-      <span class="hud-label">TIME</span>
-      <span class="hud-val" id="hud-time">60</span>
+
+    <!-- Right Group: Quick Restart & Sound Toggle Buttons -->
+    <div class="hud-group">
+      <button class="hud-btn" id="btn-quick-restart" title="Quick Restart">↺</button>
+      <button class="hud-btn" id="btn-mute-toggle" title="Toggle Sound">🔊</button>
     </div>
   </div>
 
@@ -344,10 +424,11 @@
 </div>
 
 <script>
-// Web Audio Synthesizer
+// Web Audio Synthesizer with Sound Mute Control
 class SoundFX {
   constructor() {
     this.ctx = null;
+    this.isMuted = false;
     this.scale = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25];
   }
   init() {
@@ -359,8 +440,12 @@ class SoundFX {
       this.ctx.resume();
     }
   }
+  toggleMute() {
+    this.isMuted = !this.isMuted;
+    return this.isMuted;
+  }
   playHit(combo) {
-    if (!this.ctx) return;
+    if (this.isMuted || !this.ctx) return;
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
@@ -379,7 +464,7 @@ class SoundFX {
     osc.stop(now + 0.15);
   }
   playMiss() {
-    if (!this.ctx) return;
+    if (this.isMuted || !this.ctx) return;
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
@@ -397,7 +482,7 @@ class SoundFX {
     osc.stop(now + 0.17);
   }
   playGold() {
-    if (!this.ctx) return;
+    if (this.isMuted || !this.ctx) return;
     const now = this.ctx.currentTime;
     [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
       const osc = this.ctx.createOscillator();
@@ -890,6 +975,19 @@ function updateHUD() {
   document.getElementById('hud-flock').textContent = birds.length;
   document.getElementById('hud-time').textContent = timeLeft;
 
+  // Streak Flame Management
+  const streakBadge = document.getElementById('streak-badge');
+  const streakVal = document.getElementById('streak-val');
+  if (currentStreak >= 2) {
+    streakVal.textContent = `x${currentStreak}`;
+    streakBadge.classList.remove('hidden');
+    streakBadge.classList.remove('streak-pulse');
+    void streakBadge.offsetWidth; // Trigger reflow
+    streakBadge.classList.add('streak-pulse');
+  } else {
+    streakBadge.classList.add('hidden');
+  }
+
   const timerBadge = document.getElementById('timer-badge');
   if (timeLeft <= 10) {
     timerBadge.classList.add('urgent');
@@ -963,9 +1061,23 @@ function endGame() {
   document.getElementById('screen-gameover').classList.remove('hidden');
 }
 
-// UI Buttons
+// UI Buttons & Listeners
 document.getElementById('btn-start').addEventListener('click', startGame);
 document.getElementById('btn-retry').addEventListener('click', startGame);
+
+// Quick Restart Button
+document.getElementById('btn-quick-restart').addEventListener('click', (e) => {
+  e.stopPropagation();
+  startGame();
+});
+
+// Sound Mute Toggle
+document.getElementById('btn-mute-toggle').addEventListener('click', (e) => {
+  e.stopPropagation();
+  sfx.init();
+  const muted = sfx.toggleMute();
+  document.getElementById('btn-mute-toggle').textContent = muted ? '🔇' : '🔊';
+});
 
 document.querySelectorAll('.mode-btn').forEach(btn => {
   btn.addEventListener('click', (e) => {

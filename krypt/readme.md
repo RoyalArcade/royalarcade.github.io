@@ -1,3 +1,3 @@
 Try this
 
-https://royalarcade.github.io/Krypt/
+https://royalarcade.github.io/krypt/

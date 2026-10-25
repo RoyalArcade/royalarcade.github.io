@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Sky Burst | RoyalArcade</title>
+
+<!-- Social Preview Meta Tags for Instagram & WhatsApp -->
+<meta property="og:title" content="Sky Burst: Starling Rush 🚀 | RoyalArcade" />
+<meta property="og:description" content="Tap to burst the flock before time runs out! Can you beat the RoyalArcade high score?" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://royalarcade.github.io" />
+
+<style>
+  :root {
+    --primary: #FF3366;
+    --accent: #FFD700;
+    --cyan: #00F0FF;
+    --bg-start: #1A0B2E;
+    --bg-end: #3B1578;
+  }
+  * {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+    margin: 0;
+    padding: 0;
+    touch-action: none;
+  }
+  body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #0d0618;
+    font-family: 'Fredoka', 'Nunito', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #game-wrapper {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    max-width: 480px;
+    max-height: 854px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+    overflow: hidden;
+    background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
+    border-radius: 18px;
+  }
+  canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: crosshair;
+  }
+  /* Modern Glassmorphic HUD */
+  #hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .hud-badge {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    border-radius: 20px;
+    padding: 6px 14px;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  }
+  .hud-label {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #FFD700;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  }
+  .hud-val {
+    font-size: 20px;
+    font-weight: 900;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  }
+  #timer-badge.urgent {
+    background: rgba(255, 40, 80, 0.45);
+    border-color: #FF2A55;
+    animation: urgentPulse 0.6s infinite alternate;
+  }
+  @keyframes urgentPulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.12); }
+  }
+  /* Translucent Glass Screens Overlay so Opening Birds are Visible */
+  .screen-overlay {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(26, 11, 46, 0.58) 0%, rgba(13, 6, 24, 0.85) 100%);
+    backdrop-filter: blur(5px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+    z-index: 50;
+    transition: opacity 0.3s ease;
+  }
+  .screen-overlay.hidden {
+    display: none;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .studio-tag {
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #00F0FF;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+  }
+  .game-title {
+    font-size: 38px;
+    font-weight: 900;
+    line-height: 1.1;
+    background: linear-gradient(45deg, #FFD700, #FF3366, #00F0FF);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 4px 12px rgba(255,51,102,0.5));
+    margin-bottom: 6px;
+    animation: titleFloat 3s ease-in-out infinite alternate;
+  }
+  @keyframes titleFloat {
+    from { transform: translateY(0px); }
+    to { transform: translateY(-5px); }
+  }
+  .game-subtitle {
+    font-size: 13px;
+    font-weight: 700;
+    color: #C3B0E6;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+  }
+  /* High Score Pill on Start Screen */
+  .highscore-banner {
+    background: rgba(255, 215, 0, 0.15);
+    border: 1.5px solid rgba(255, 215, 0, 0.4);
+    border-radius: 16px;
+    padding: 6px 16px;
+    color: #FFD700;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.2);
+  }
+  .mode-selector {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 22px;
+    width: 100%;
+    max-width: 320px;
+  }
+  .mode-btn {
+    flex: 1;
+    padding: 10px 4px;
+    border-radius: 14px;
+    border: 2px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mode-btn.active {
+    background: linear-gradient(135deg, #00F0FF, #0077FE);
+    border-color: #00F0FF;
+    box-shadow: 0 0 16px rgba(0,240,255,0.5);
+    transform: translateY(-2px);
+  }
+  .btn-play {
+    width: 100%;
+    max-width: 280px;
+    padding: 16px;
+    border-radius: 30px;
+    border: none;
+    background: linear-gradient(135deg, #FF3366, #FF8800);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(255,51,102,0.6);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn-play:active {
+    transform: scale(0.96);
+  }
+  .footer-copyright {
+    margin-top: 18px;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.35);
+    letter-spacing: 0.5px;
+  }
+  /* Game Over Stat Card */
+  .stat-card {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 18px;
+    width: 100%;
+    max-width: 300px;
+    margin-bottom: 18px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .stat-val {
+    font-size: 22px;
+    font-weight: 900;
+    color: #00F0FF;
+  }
+  .stat-lbl {
+    font-size: 11px;
+    font-weight: 700;
+    color: #C3B0E6;
+  }
+  #new-record-alert {
+    color: #FFD700;
+    font-size: 14px;
+    font-weight: 900;
+    margin-bottom: 12px;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+    display: none;
+  }
+  .btn-share {
+    width: 100%;
+    max-width: 280px;
+    padding: 14px;
+    border-radius: 30px;
+    border: 2px solid #00F0FF;
+    background: rgba(0, 240, 255, 0.15);
+    color: #00F0FF;
+    font-size: 16px;
+    font-weight: 800;
+    margin-top: 12px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div id="game-wrapper">
+  <!-- Interactive Canvas -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Live In-Game HUD -->
+  <div id="hud">
+    <div class="hud-badge" id="score-badge">
+      <span class="hud-label">SCORE</span>
+      <span class="hud-val" id="hud-score">0</span>
+    </div>
+    <div class="hud-badge" id="flock-badge">
+      <span class="hud-label">FLOCK</span>
+      <span class="hud-val" id="hud-flock">5</span>
+    </div>
+    <div class="hud-badge" id="timer-badge">
+      <span class="hud-label">TIME</span>
+      <span class="hud-val" id="hud-time">60</span>
+    </div>
+  </div>
+
+  <!-- Start Screen with Opening Bird Showcase & RoyalArcade branding -->
+  <div id="screen-start" class="screen-overlay">
+    <div class="studio-tag">ROYAL ARCADE PRESENTS</div>
+    <h1 class="game-title">SKY BURST</h1>
+    <p class="game-subtitle">TAP TO BURST • DON'T MISS!</p>
+
+    <!-- Personal High Score Tracker -->
+    <div class="highscore-banner">
+      🏆 PERSONAL BEST: <span id="start-best-score">0</span>
+    </div>
+
+    <div class="mode-selector">
+      <button class="mode-btn active" data-mode="easy">CHILL</button>
+      <button class="mode-btn" data-mode="medium">PRO</button>
+      <button class="mode-btn" data-mode="hard">CHAOS</button>
+    </div>
+
+    <button class="btn-play" id="btn-start">TAP TO PLAY</button>
+    <div class="footer-copyright">© 2026 RoyalArcade. All Rights Reserved.</div>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div id="screen-gameover" class="screen-overlay hidden">
+    <div class="studio-tag">ROYAL ARCADE</div>
+    <h1 class="game-title" style="font-size: 32px;">TIME'S UP!</h1>
+    <p class="game-subtitle" id="go-rank">ACE SHARPSHOOTER</p>
+
+    <div id="new-record-alert">🎉 NEW PERSONAL HIGH SCORE! 🎉</div>
+
+    <div class="stat-card">
+      <div class="stat-item">
+        <span class="stat-val" id="go-score">0</span>
+        <span class="stat-lbl">FINAL SCORE</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-val" id="go-best">0</span>
+        <span class="stat-lbl">BEST SCORE</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-val" id="go-accuracy">0%</span>
+        <span class="stat-lbl">ACCURACY</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-val" id="go-streak">0</span>
+        <span class="stat-lbl">MAX STREAK</span>
+      </div>
+    </div>
+
+    <button class="btn-play" id="btn-retry">PLAY AGAIN</button>
+    <button class="btn-share" id="btn-share">SHARE SCORE ⚡</button>
+  </div>
+</div>
+
+<script>
+// Web Audio Synthesizer
+class SoundFX {
+  constructor() {
+    this.ctx = null;
+    this.scale = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25];
+  }
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
+    }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+  }
+  playHit(combo) {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    
+    const freq = this.scale[Math.min(combo, this.scale.length - 1)];
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, now);
+    osc.frequency.exponentialRampToValueAtTime(freq * 1.5, now + 0.12);
+
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.15);
+  }
+  playMiss() {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(320, now);
+    osc.frequency.exponentialRampToValueAtTime(140, now + 0.16);
+
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.17);
+  }
+  playGold() {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + i * 0.05);
+      gain.gain.setValueAtTime(0.2, now + i * 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.05 + 0.2);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now + i * 0.05);
+      osc.stop(now + i * 0.05 + 0.21);
+    });
+  }
+}
+
+const sfx = new SoundFX();
+
+// Difficulty Presets
+const MODES = {
+  easy:   { name: 'CHILL', startBirds: 3, baseSpeed: 2.0, maxSpeed: 3.6, hitPadding: 24, maxBirds: 28 },
+  medium: { name: 'PRO',   startBirds: 4, baseSpeed: 3.0, maxSpeed: 4.8, hitPadding: 16, maxBirds: 36 },
+  hard:   { name: 'CHAOS', startBirds: 6, baseSpeed: 4.2, maxSpeed: 6.5, hitPadding: 10, maxBirds: 44 }
+};
+
+// Canvas & Variables
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const wrapper = document.getElementById('game-wrapper');
+
+let currentMode = 'easy';
+let isRunning = false;
+let score = 0;
+let shotsTotal = 0;
+let shotsHit = 0;
+let currentStreak = 0;
+let maxStreak = 0;
+let timeLeft = 60;
+let matchTimer = null;
+let currentSpeedMultiplier = 1.0;
+let screenShake = 0;
+
+// High Score via localStorage
+let bestScore = parseInt(localStorage.getItem('skyburst_best_score') || '0', 10);
+document.getElementById('start-best-score').textContent = bestScore;
+
+// Entities
+let birds = [];
+let particles = [];
+let floatingTexts = [];
+let stars = [];
+
+function resizeCanvas() {
+  const rect = wrapper.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.resetTransform();
+  ctx.scale(dpr, dpr);
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+function initBackgroundStars() {
+  stars = [];
+  const w = wrapper.clientWidth;
+  const h = wrapper.clientHeight;
+  for (let i = 0; i < 40; i++) {
+    stars.push({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      size: Math.random() * 2 + 1,
+      speed: Math.random() * 0.3 + 0.1,
+      opacity: Math.random() * 0.7 + 0.2
+    });
+  }
+}
+initBackgroundStars();
+
+// Bird Class
+class Bird {
+  constructor(x, y, vx, vy, isGold = false) {
+    this.x = x;
+    this.y = y;
+    this.vx = vx;
+    this.vy = vy;
+    this.isGold = isGold;
+    this.radius = isGold ? 22 : 18;
+    this.flap = Math.random() * Math.PI;
+    this.flapSpeed = 0.18 + Math.random() * 0.08;
+    this.color = isGold ? '#FFD700' : (Math.random() > 0.5 ? '#00F0FF' : '#FF3366');
+    this.fleeing = false;
+    this.scale = 1.0;
+  }
+
+  update(speedMult) {
+    if (this.fleeing) {
+      this.vy -= 0.6;
+      this.scale = Math.max(0.1, this.scale - 0.04);
+      this.x += this.vx * 2;
+      this.y += this.vy;
+      return;
+    }
+
+    this.flap += this.flapSpeed * speedMult;
+    this.x += this.vx * speedMult;
+    this.y += this.vy * speedMult;
+
+    const w = wrapper.clientWidth;
+    const h = wrapper.clientHeight;
+
+    if (this.x < this.radius) {
+      this.x = this.radius;
+      this.vx = Math.abs(this.vx);
+    } else if (this.x > w - this.radius) {
+      this.x = w - this.radius;
+      this.vx = -Math.abs(this.vx);
+    }
+
+    if (this.y < this.radius + 60) {
+      this.y = this.radius + 60;
+      this.vy = Math.abs(this.vy);
+    } else if (this.y > h - this.radius - 20) {
+      this.y = h - this.radius - 20;
+      this.vy = -Math.abs(this.vy);
+    }
+  }
+
+  draw(c) {
+    c.save();
+    c.translate(this.x, this.y);
+    c.scale(this.scale, this.scale);
+
+    const angle = Math.atan2(this.vy, this.vx);
+    c.rotate(angle);
+
+    if (this.isGold) {
+      c.shadowBlur = 18;
+      c.shadowColor = '#FFD700';
+    }
+
+    const wingY = Math.sin(this.flap) * 12;
+
+    // Wing
+    c.fillStyle = this.isGold ? '#FFA500' : (this.color === '#00F0FF' ? '#0088FF' : '#CC0044');
+    c.beginPath();
+    c.ellipse(-4, -wingY, 14, 7, Math.PI / 4, 0, Math.PI * 2);
+    c.fill();
+
+    // Body
+    c.fillStyle = this.color;
+    c.beginPath();
+    c.ellipse(0, 0, this.radius, this.radius * 0.72, 0, 0, Math.PI * 2);
+    c.fill();
+
+    // Eye
+    c.fillStyle = '#FFFFFF';
+    c.beginPath();
+    c.arc(8, -4, 6, 0, Math.PI * 2);
+    c.fill();
+
+    c.fillStyle = '#0F0620';
+    c.beginPath();
+    c.arc(10, -4, 3, 0, Math.PI * 2);
+    c.fill();
+
+    // Beak
+    c.fillStyle = '#FF9900';
+    c.beginPath();
+    c.moveTo(this.radius - 2, -2);
+    c.lineTo(this.radius + 9, 1);
+    c.lineTo(this.radius - 2, 5);
+    c.closePath();
+    c.fill();
+
+    c.restore();
+  }
+}
+
+// Particles
+class Particle {
+  constructor(x, y, color, isSmoke = false) {
+    this.x = x;
+    this.y = y;
+    this.color = color;
+    this.isSmoke = isSmoke;
+    this.size = isSmoke ? Math.random() * 8 + 6 : Math.random() * 5 + 3;
+    const speed = isSmoke ? Math.random() * 1.5 + 0.5 : Math.random() * 6 + 2;
+    const angle = Math.random() * Math.PI * 2;
+    this.vx = Math.cos(angle) * speed;
+    this.vy = Math.sin(angle) * speed - (isSmoke ? 1.2 : 0);
+    this.life = 1.0;
+    this.decay = isSmoke ? 0.035 : 0.025;
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.life -= this.decay;
+  }
+  draw(c) {
+    c.save();
+    c.globalAlpha = Math.max(0, this.life);
+    c.fillStyle = this.color;
+    c.beginPath();
+    c.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    c.fill();
+    c.restore();
+  }
+}
+
+// Floating Text
+class FloatingText {
+  constructor(x, y, text, color) {
+    this.x = x;
+    this.y = y;
+    this.text = text;
+    this.color = color;
+    this.life = 1.0;
+    this.scale = 0.5;
+  }
+  update() {
+    this.y -= 1.8;
+    this.life -= 0.022;
+    this.scale = Math.min(1.2, this.scale + 0.12);
+  }
+  draw(c) {
+    c.save();
+    c.globalAlpha = Math.max(0, this.life);
+    c.translate(this.x, this.y);
+    c.scale(this.scale, this.scale);
+    c.font = '900 20px Fredoka, sans-serif';
+    c.fillStyle = this.color;
+    c.strokeStyle = '#000';
+    c.lineWidth = 4;
+    c.textAlign = 'center';
+    c.strokeText(this.text, 0, 0);
+    c.fillText(this.text, 0, 0);
+    c.restore();
+  }
+}
+
+// Spawns a natural bird
+function spawnBird(x, y, parentVx = null, parentVy = null, isChild = false, forceGold = false) {
+  const w = wrapper.clientWidth;
+  const h = wrapper.clientHeight;
+  const cfg = MODES[currentMode];
+
+  let spawnX = x !== undefined ? x : Math.random() * (w - 80) + 40;
+  let spawnY = y !== undefined ? y : Math.random() * (h * 0.5) + 120;
+
+  let vx, vy;
+  if (parentVx !== null && parentVy !== null) {
+    const angleSpread = (Math.random() - 0.5) * 1.6;
+    const speed = Math.hypot(parentVx, parentVy) * (0.9 + Math.random() * 0.4);
+    const baseAngle = Math.atan2(parentVy, parentVx) + angleSpread;
+    vx = Math.cos(baseAngle) * speed;
+    vy = Math.sin(baseAngle) * speed;
+  } else {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = (cfg.baseSpeed || 2.2) * (0.8 + Math.random() * 0.4);
+    vx = Math.cos(angle) * speed;
+    vy = Math.sin(angle) * speed;
+  }
+
+  const isGold = forceGold || (!isChild && Math.random() < 0.14);
+  birds.push(new Bird(spawnX, spawnY, vx, vy, isGold));
+}
+
+// Spawns opening flock for start menu
+function initOpeningFlock() {
+  birds = [];
+  spawnBird(undefined, undefined, null, null, false, true); // 1 Golden Starling
+  for (let i = 0; i < 4; i++) {
+    spawnBird();
+  }
+  document.getElementById('hud-flock').textContent = birds.length;
+}
+
+// In-Game Flock
+function initFlock() {
+  birds = [];
+  const cfg = MODES[currentMode];
+  for (let i = 0; i < cfg.startBirds; i++) {
+    spawnBird();
+  }
+  document.getElementById('hud-flock').textContent = birds.length;
+}
+
+// Tap Handling
+function handleTap(clientX, clientY) {
+  if (!isRunning) return;
+  sfx.init();
+
+  const rect = canvas.getBoundingClientRect();
+  const tapX = clientX - rect.left;
+  const tapY = clientY - rect.top;
+
+  shotsTotal++;
+  const cfg = MODES[currentMode];
+  let hitIndex = -1;
+
+  for (let i = birds.length - 1; i >= 0; i--) {
+    const b = birds[i];
+    if (b.fleeing) continue;
+    const dist = Math.hypot(tapX - b.x, tapY - b.y);
+    if (dist <= b.radius + cfg.hitPadding) {
+      hitIndex = i;
+      break;
+    }
+  }
+
+  if (hitIndex !== -1) {
+    const b = birds[hitIndex];
+    shotsHit++;
+    currentStreak++;
+    if (currentStreak > maxStreak) maxStreak = currentStreak;
+
+    if (navigator.vibrate) navigator.vibrate(20);
+    screenShake = 6;
+
+    const pts = (b.isGold ? 500 : 100) * Math.min(currentStreak, 5);
+    score += pts;
+
+    if (b.isGold) {
+      sfx.playGold();
+      floatingTexts.push(new FloatingText(b.x, b.y, `GOLDEN! +${pts}`, '#FFD700'));
+    } else {
+      sfx.playHit(currentStreak);
+      const compliments = ["NICE!", "SUPER!", "AWESOME!", "GREAT!", "WOW!"];
+      const text = currentStreak > 2 ? compliments[Math.floor(Math.random() * compliments.length)] : `+${pts}`;
+      floatingTexts.push(new FloatingText(b.x, b.y, text, '#00F0FF'));
+    }
+
+    const pColor = b.isGold ? '#FFD700' : b.color;
+    for (let p = 0; p < 16; p++) {
+      particles.push(new Particle(b.x, b.y, pColor));
+    }
+
+    const parentX = b.x;
+    const parentY = b.y;
+    const pVx = b.vx;
+    const pVy = b.vy;
+
+    birds.splice(hitIndex, 1);
+    currentSpeedMultiplier = Math.min(currentSpeedMultiplier + 0.08, cfg.maxSpeed / cfg.baseSpeed);
+
+    for (let c = 0; c < 3; c++) {
+      if (birds.length < cfg.maxBirds) {
+        spawnBird(parentX, parentY, pVx, pVy, true);
+      }
+    }
+  } else {
+    sfx.playMiss();
+    currentStreak = 0;
+
+    for (let p = 0; p < 6; p++) {
+      particles.push(new Particle(tapX, tapY, 'rgba(255,255,255,0.6)', true));
+    }
+    floatingTexts.push(new FloatingText(tapX, tapY, "WHOOSH!", '#C3B0E6'));
+
+    if (birds.length > 1) {
+      let nearestIdx = -1;
+      let minDist = Infinity;
+      birds.forEach((bird, idx) => {
+        if (!bird.fleeing) {
+          const d = Math.hypot(tapX - bird.x, tapY - bird.y);
+          if (d < minDist) {
+            minDist = d;
+            nearestIdx = idx;
+          }
+        }
+      });
+
+      if (nearestIdx !== -1) {
+        birds[nearestIdx].fleeing = true;
+      }
+    }
+
+    currentSpeedMultiplier = Math.max(1.0, currentSpeedMultiplier * 0.82);
+  }
+
+  updateHUD();
+}
+
+canvas.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  handleTap(e.clientX, e.clientY);
+});
+
+// Periodic Speed Decay & Animation Loop
+let lastDecayTime = 0;
+
+function update(time) {
+  if (screenShake > 0) screenShake *= 0.85;
+
+  stars.forEach(s => {
+    s.y += s.speed;
+    if (s.y > wrapper.clientHeight) s.y = 0;
+  });
+
+  // Calm gliding speed on start screen, full dynamic speed in match
+  const activeSpeed = isRunning ? currentSpeedMultiplier : 0.85;
+
+  if (isRunning) {
+    if (time - lastDecayTime > 800) {
+      if (currentSpeedMultiplier > 1.0) {
+        currentSpeedMultiplier = Math.max(1.0, currentSpeedMultiplier - 0.03);
+      }
+      lastDecayTime = time;
+    }
+  }
+
+  for (let i = birds.length - 1; i >= 0; i--) {
+    const b = birds[i];
+    b.update(activeSpeed);
+
+    if (b.fleeing && (b.y < -40 || b.scale <= 0.15)) {
+      birds.splice(i, 1);
+    }
+  }
+
+  if (birds.length === 0) {
+    spawnBird();
+  }
+
+  for (let i = particles.length - 1; i >= 0; i--) {
+    particles[i].update();
+    if (particles[i].life <= 0) particles.splice(i, 1);
+  }
+
+  for (let i = floatingTexts.length - 1; i >= 0; i--) {
+    floatingTexts[i].update();
+    if (floatingTexts[i].life <= 0) floatingTexts.splice(i, 1);
+  }
+}
+
+function render() {
+  const w = wrapper.clientWidth;
+  const h = wrapper.clientHeight;
+
+  ctx.save();
+  if (screenShake > 0.5) {
+    ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake);
+  }
+
+  ctx.clearRect(0, 0, w, h);
+
+  stars.forEach(s => {
+    ctx.fillStyle = `rgba(255, 255, 255, ${s.opacity})`;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Mountain Silhouettes
+  ctx.fillStyle = 'rgba(20, 8, 45, 0.65)';
+  ctx.beginPath();
+  ctx.moveTo(0, h);
+  ctx.lineTo(0, h - 90);
+  ctx.lineTo(w * 0.35, h - 160);
+  ctx.lineTo(w * 0.75, h - 80);
+  ctx.lineTo(w, h - 130);
+  ctx.lineTo(w, h);
+  ctx.closePath();
+  ctx.fill();
+
+  // Draw Birds
+  birds.forEach(b => b.draw(ctx));
+
+  // Draw Particles & Floating Texts
+  particles.forEach(p => p.draw(ctx));
+  floatingTexts.forEach(ft => ft.draw(ctx));
+
+  ctx.restore();
+}
+
+function loop(time) {
+  update(time);
+  render();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// Spawn birds immediately on startup
+initOpeningFlock();
+
+// HUD Updater
+function updateHUD() {
+  document.getElementById('hud-score').textContent = score;
+  document.getElementById('hud-flock').textContent = birds.length;
+  document.getElementById('hud-time').textContent = timeLeft;
+
+  const timerBadge = document.getElementById('timer-badge');
+  if (timeLeft <= 10) {
+    timerBadge.classList.add('urgent');
+  } else {
+    timerBadge.classList.remove('urgent');
+  }
+}
+
+// 60-Second Timer
+function startTimer() {
+  timeLeft = 60;
+  updateHUD();
+  if (matchTimer) clearInterval(matchTimer);
+
+  matchTimer = setInterval(() => {
+    timeLeft--;
+    updateHUD();
+
+    if (timeLeft <= 0) {
+      clearInterval(matchTimer);
+      endGame();
+    }
+  }, 1000);
+}
+
+// Game Flow
+function startGame() {
+  sfx.init();
+  score = 0;
+  shotsTotal = 0;
+  shotsHit = 0;
+  currentStreak = 0;
+  maxStreak = 0;
+  currentSpeedMultiplier = 1.0;
+
+  document.getElementById('screen-start').classList.add('hidden');
+  document.getElementById('screen-gameover').classList.add('hidden');
+  document.getElementById('new-record-alert').style.display = 'none';
+
+  initFlock();
+  startTimer();
+  isRunning = true;
+}
+
+function endGame() {
+  isRunning = false;
+  const accuracy = shotsTotal > 0 ? Math.round((shotsHit / shotsTotal) * 100) : 0;
+
+  // Check and save High Score
+  const alertEl = document.getElementById('new-record-alert');
+  if (score > bestScore) {
+    bestScore = score;
+    localStorage.setItem('skyburst_best_score', bestScore);
+    document.getElementById('start-best-score').textContent = bestScore;
+    alertEl.style.display = 'block';
+  } else {
+    alertEl.style.display = 'none';
+  }
+
+  let title = "SKY CADET";
+  if (accuracy >= 85 && score > 8000) title = "SSS STAR PILOT 🏆";
+  else if (accuracy >= 65 && score > 4500) title = "AVIAN ACE ⚡";
+  else if (score > 2500) title = "SHARPSHOOTER 🎯";
+
+  document.getElementById('go-rank').textContent = title;
+  document.getElementById('go-score').textContent = score;
+  document.getElementById('go-best').textContent = bestScore;
+  document.getElementById('go-accuracy').textContent = `${accuracy}%`;
+  document.getElementById('go-streak').textContent = maxStreak;
+
+  document.getElementById('screen-gameover').classList.remove('hidden');
+}
+
+// UI Buttons
+document.getElementById('btn-start').addEventListener('click', startGame);
+document.getElementById('btn-retry').addEventListener('click', startGame);
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    currentMode = e.target.getAttribute('data-mode');
+  });
+});
+
+// Instagram / Web Share
+document.getElementById('btn-share').addEventListener('click', async () => {
+  const shareText = `🚀 I just scored ${score} pts in Sky Burst on RoyalArcade! (Best: ${bestScore} pts). Can you beat my streak? Play now:`;
+  const url = 'https://royalarcade.github.io';
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: 'Sky Burst | RoyalArcade',
+        text: shareText,
+        url: url
+      });
+    } catch(err) {}
+  } else {
+    navigator.clipboard.writeText(`${shareText} ${url}`);
+    const btn = document.getElementById('btn-share');
+    btn.textContent = "COPIED TO CLIPBOARD! ✨";
+    setTimeout(() => { btn.textContent = "SHARE SCORE ⚡"; }, 2000);
+  }
+});
+</script>
+</body>
+</html>

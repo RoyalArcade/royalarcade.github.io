@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>✨ Dancing Letters Phonics Magic ✨</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-sky: #E0F7FA;
+      --grass: #81C784;
+      --wood: #FFE082;
+      --card-shadow: 0 10px 0 rgba(0, 0, 0, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Fredoka One', cursive, sans-serif;
+      background: linear-gradient(180deg, #b3e5fc 0%, #e1f5fe 60%, #c8e6c9 60%, #81c784 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+      overflow-x: hidden;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      color: #FF5722;
+      text-shadow: 3px 3px 0 #FFE0B2, 6px 6px 0 rgba(0,0,0,0.08);
+      letter-spacing: 1px;
+    }
+
+    .subtitle {
+      font-family: 'Nunito', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: #0277BD;
+    }
+
+    /* Word Quick Pickers */
+    .word-presets {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .preset-pill {
+      background: #FFFFFF;
+      border: 3px solid #FFCA28;
+      border-radius: 30px;
+      padding: 8px 18px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #FFB300;
+      transition: transform 0.1s;
+    }
+
+    .preset-pill:active {
+      transform: translateY(4px);
+      box-shadow: 0 1px 0 #FFB300;
+    }
+
+    /* Dance Floor / Stage */
+    .stage-container {
+      background: #FFF9C4;
+      border: 6px dashed #FFA000;
+      border-radius: 28px;
+      width: 95%;
+      max-width: 650px;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 10px;
+      margin-bottom: 16px;
+      position: relative;
+      box-shadow: var(--card-shadow);
+    }
+
+    .stage-banner {
+      position: absolute;
+      top: -14px;
+      background: #FF7043;
+      color: white;
+      padding: 4px 18px;
+      border-radius: 20px;
+      font-size: 0.95rem;
+      letter-spacing: 1px;
+    }
+
+    .stage-slots {
+      display: flex;
+      gap: 20px;
+      min-height: 120px;
+      align-items: center;
+      justify-content: center;
+      transition: gap 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* When letters hold hands, they snap tightly together */
+    .stage-slots.holding-hands {
+      gap: 2px !important;
+    }
+
+    /* Chunky Letter Block */
+    .letter-block {
+      width: 84px;
+      height: 94px;
+      border-radius: 20px;
+      color: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      cursor: pointer;
+      position: relative;
+      box-shadow: 0 8px 0 rgba(0, 0, 0, 0.2);
+      transition: transform 0.15s, background-color 0.2s;
+    }
+
+    .letter-block:active {
+      transform: translateY(6px);
+      box-shadow: 0 2px 0 rgba(0,0,0,0.2);
+    }
+
+    /* Cute smiling eyes on each block */
+    .face {
+      position: absolute;
+      top: 10px;
+      display: flex;
+      gap: 16px;
+    }
+    .eye {
+      width: 8px;
+      height: 10px;
+      background: #333;
+      border-radius: 50%;
+      position: relative;
+    }
+    .eye::after {
+      content: '';
+      position: absolute;
+      top: 1px;
+      left: 1px;
+      width: 3px;
+      height: 3px;
+      background: white;
+      border-radius: 50%;
+    }
+
+    .char-text {
+      margin-top: 14px;
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+    }
+
+    /* Dancing Animations */
+    .dancing {
+      animation: wiggleDance 0.55s ease infinite alternate;
+    }
+
+    .super-bounce {
+      animation: bounceSquash 0.6s ease;
+    }
+
+    @keyframes wiggleDance {
+      0% { transform: rotate(-8deg) scale(1.05); }
+      100% { transform: rotate(8deg) scale(1.1); }
+    }
+
+    @keyframes bounceSquash {
+      0% { transform: scale(1, 1) translateY(0); }
+      30% { transform: scale(1.2, 0.8) translateY(10px); }
+      60% { transform: scale(0.85, 1.25) translateY(-25px); }
+      100% { transform: scale(1, 1) translateY(0); }
+    }
+
+    /* Stage Controls */
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.15rem;
+      padding: 10px 22px;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 6px 0 rgba(0,0,0,0.15);
+      transition: transform 0.1s;
+    }
+
+    .btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 rgba(0,0,0,0.15);
+    }
+
+    .btn-hold-hands {
+      background: #FF4081;
+      color: white;
+    }
+
+    .btn-clear {
+      background: #78909C;
+      color: white;
+    }
+
+    /* Letter Keyboard Bank */
+    .bank-title {
+      font-size: 1.1rem;
+      color: #2E7D32;
+      margin: 12px 0 8px;
+    }
+
+    .letter-bank {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      max-width: 600px;
+      justify-content: center;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 24px;
+      box-shadow: var(--card-shadow);
+    }
+
+    /* Popup Word Celebration Modal */
+    .celebration-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 1000;
+    }
+
+    .celebration-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .celebration-card {
+      background: #FFF;
+      border-radius: 36px;
+      border: 8px solid #FFD54F;
+      padding: 30px;
+      text-align: center;
+      transform: scale(0.6);
+      transition: transform 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      max-width: 90%;
+      width: 340px;
+    }
+
+    .celebration-overlay.active .celebration-card {
+      transform: scale(1);
+    }
+
+    .celebration-emoji {
+      font-size: 5rem;
+      animation: wiggleDance 0.8s ease infinite alternate;
+    }
+
+    .celebration-text {
+      font-size: 2.8rem;
+      color: #D81B60;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>✨ Dancing Letters! ✨</h1>
+    <div class="subtitle">Tap letters, hear the sound, then hold hands to read!</div>
+  </header>
+
+  <!-- Word Presets for Toddlers -->
+  <div class="word-presets">
+    <button class="preset-pill" onclick="loadWord('C','A','T')">🐱 C - A - T</button>
+    <button class="preset-pill" onclick="loadWord('S','U','N')">☀️ S - U - N</button>
+    <button class="preset-pill" onclick="loadWord('D','O','G')">🐶 D - O - G</button>
+    <button class="preset-pill" onclick="loadWord('P','I','G')">🐷 P - I - G</button>
+    <button class="preset-pill" onclick="loadWord('B','E','D')">🛏️ B - E - D</button>
+  </div>
+
+  <!-- Stage: Where letters hold hands -->
+  <div class="stage-container">
+    <div class="stage-banner">🤝 THE DANCE FLOOR</div>
+    <div class="stage-slots" id="stage">
+      <!-- Letters placed here -->
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-hold-hands" onclick="triggerHoldingHands()">
+        🤝 Hold Hands & Blend!
+      </button>
+      <button class="btn btn-clear" onclick="clearStage()">
+        🔄 Clear
+      </button>
+    </div>
+  </div>
+
+  <div class="bank-title">👇 Tap a Letter to Dance and Sing! 👇</div>
+  <div class="letter-bank" id="bank">
+    <!-- Letter bank injected by JS -->
+  </div>
+
+  <!-- Word Magic Celebration Modal -->
+  <div class="celebration-overlay" id="overlay" onclick="closeCelebration()">
+    <div class="celebration-card">
+      <div class="celebration-emoji" id="celeb-emoji">🐱</div>
+      <div class="celebration-text" id="celeb-word">CAT</div>
+      <p style="font-family:'Nunito'; font-size:1.1rem; color:#555;">Word Magic happened! ✨</p>
+    </div>
+  </div>
+
+  <script>
+    // Pure sounds dictionary for 2-year-olds (Phonemic respelling for SpeechSynthesis)
+    const letterData = {
+      'A': { sound: 'ah', color: '#E53935' },
+      'B': { sound: 'b', color: '#1E88E5' },
+      'C': { sound: 'k', color: '#FDD835' },
+      'D': { sound: 'd', color: '#FB8C00' },
+      'E': { sound: 'eh', color: '#D81B60' },
+      'F': { sound: 'ff', color: '#00ACC1' },
+      'G': { sound: 'g', color: '#43A047' },
+      'H': { sound: 'h', color: '#8E24AA' },
+      'I': { sound: 'ih', color: '#3949AB' },
+      'J': { sound: 'j', color: '#FFB300' },
+      'K': { sound: 'k', color: '#F4511E' },
+      'L': { sound: 'lll', color: '#00897B' },
+      'M': { sound: 'mmm', color: '#C0CA33' },
+      'N': { sound: 'nnn', color: '#6D4C41' },
+      'O': { sound: 'o', color: '#F4511E' },
+      'P': { sound: 'p', color: '#E91E63' },
+      'R': { sound: 'rrr', color: '#7CB342' },
+      'S': { sound: 'sss', color: '#039BE5' },
+      'T': { sound: 't', color: '#00B0FF' },
+      'U': { sound: 'uh', color: '#8E24AA' },
+      'W': { sound: 'w', color: '#00897B' },
+      'Y': { sound: 'y', color: '#FFB300' },
+      'Z': { sound: 'zzz', color: '#FFD600' }
+    };
+
+    // Reward dictionary for completed words
+    const magicDictionary = {
+      'CAT': '🐱',
+      'SUN': '☀️',
+      'DOG': '🐶',
+      'PIG': '🐷',
+      'BED': '🛏️',
+      'CUP': '☕',
+      'BAT': '🦇',
+      'BUS': '🚌',
+      'HAT': '🎩',
+      'BUG': '🐞',
+      'MOM': '❤️',
+      'DAD': '⭐'
+    };
+
+    const stage = document.getElementById('stage');
+    const bank = document.getElementById('bank');
+    let stageLetters = [];
+
+    // Web Audio Synthesizer (Bouncy sounds without needing external files)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playTone(freq, type = 'sine', duration = 0.2) {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function playBoing() {
+      playTone(280, 'triangle', 0.25);
+    }
+
+    function playChime() {
+      [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+        setTimeout(() => playTone(freq, 'sine', 0.3), i * 110);
+      });
+    }
+
+    // Speech: Pronounce single phoneme pure sound
+    function speakLetterSound(char) {
+      const data = letterData[char];
+      if (!data) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(data.sound);
+      utterance.pitch = 1.35; // gentle, friendly pitch for kids
+      utterance.rate = 0.8;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Speech: Pronounce blended whole word
+    function speakWholeWord(word) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.pitch = 1.25;
+      utterance.rate = 0.85;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Build letter bank
+    Object.keys(letterData).forEach(char => {
+      const block = createBlockElement(char);
+      block.onclick = () => {
+        playBoing();
+        speakLetterSound(char);
+        addBlockToStage(char);
+      };
+      bank.appendChild(block);
+    });
+
+    function createBlockElement(char) {
+      const div = document.createElement('div');
+      div.className = 'letter-block';
+      div.style.backgroundColor = letterData[char].color;
+
+      div.innerHTML = `
+        <div class="face">
+          <div class="eye"></div>
+          <div class="eye"></div>
+        </div>
+        <div class="char-text">${char}</div>
+      `;
+      return div;
+    }
+
+    function addBlockToStage(char) {
+      if (stageLetters.length >= 4) return; // Keep simple 3-4 letter words for age 2
+      stageLetters.push(char);
+      renderStage();
+    }
+
+    function renderStage() {
+      stage.innerHTML = '';
+      stage.classList.remove('holding-hands');
+
+      stageLetters.forEach((char, index) => {
+        const block = createBlockElement(char);
+        block.classList.add('super-bounce');
+        block.onclick = () => {
+          block.classList.remove('super-bounce');
+          void block.offsetWidth;
+          block.classList.add('super-bounce');
+          playBoing();
+          speakLetterSound(char);
+        };
+        stage.appendChild(block);
+      });
+    }
+
+    function clearStage() {
+      stageLetters = [];
+      stage.classList.remove('holding-hands');
+      renderStage();
+      playTone(200, 'sine', 0.15);
+    }
+
+    function loadWord(...chars) {
+      clearStage();
+      chars.forEach((c, i) => {
+        setTimeout(() => {
+          addBlockToStage(c);
+          playBoing();
+          speakLetterSound(c);
+        }, i * 350);
+      });
+    }
+
+    // Transition: Separate sounds -> Slide together -> Hold hands -> Word Magic!
+    function triggerHoldingHands() {
+      if (stageLetters.length < 2) return;
+
+      const stageBlocks = stage.querySelectorAll('.letter-block');
+      
+      // Step 1: Speak individual sounds sequentially while bouncing
+      stageLetters.forEach((char, index) => {
+        setTimeout(() => {
+          stageBlocks[index].classList.add('super-bounce');
+          speakLetterSound(char);
+          playTone(350 + (index * 80), 'triangle', 0.2);
+        }, index * 700);
+      });
+
+      // Step 2: Slide together ("Hold hands") and wiggle dance
+      const blendDelay = stageLetters.length * 700;
+      setTimeout(() => {
+        stage.classList.add('holding-hands');
+        stageBlocks.forEach(b => b.classList.add('dancing'));
+      }, blendDelay);
+
+      // Step 3: Speak the blended whole word!
+      const word = stageLetters.join('');
+      setTimeout(() => {
+        speakWholeWord(word);
+        playChime();
+
+        // If it's a recognized toddler word, show reward popup
+        if (magicDictionary[word]) {
+          showCelebration(word, magicDictionary[word]);
+        }
+      }, blendDelay + 600);
+    }
+
+    function showCelebration(word, emoji) {
+      const overlay = document.getElementById('overlay');
+      document.getElementById('celeb-emoji').innerText = emoji;
+      document.getElementById('celeb-word').innerText = word;
+      setTimeout(() => {
+        overlay.classList.add('active');
+      }, 500);
+    }
+
+    function closeCelebration() {
+      document.getElementById('overlay').classList.remove('active');
+    }
+  </script>
+</body>
+</html>

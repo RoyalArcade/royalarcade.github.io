@@ -38,7 +38,7 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    overscroll-behavior: none; /* Stops accidental mobile pull-to-refresh */
+    overscroll-behavior: none;
     background: #0d0618;
     font-family: 'Fredoka', 'Nunito', 'Segoe UI', system-ui, -apple-system, sans-serif;
     display: flex;
@@ -62,13 +62,41 @@
     display: block;
     cursor: crosshair;
   }
-  /* Modern Glassmorphic In-Game HUD */
+
+  /* ALWAYS-VISIBLE FLOATING SOUND BUTTON (Z-INDEX 100) */
+  #btn-sound-toggle {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    color: #fff;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 100; /* Stays above all overlays and menus */
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    transition: transform 0.15s, background 0.2s;
+  }
+  #btn-sound-toggle:active {
+    transform: scale(0.9);
+    background: rgba(255, 255, 255, 0.35);
+  }
+
+  /* IN-GAME HUD */
   #hud {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    padding: 12px 14px;
+    padding: 14px 64px 14px 14px; /* Right padding preserves room for the sound button */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -86,7 +114,7 @@
     backdrop-filter: blur(8px);
     border: 2px solid rgba(255, 255, 255, 0.25);
     border-radius: 18px;
-    padding: 5px 12px;
+    padding: 5px 10px;
     color: #fff;
     display: flex;
     flex-direction: column;
@@ -101,24 +129,23 @@
     text-shadow: 0 1px 2px rgba(0,0,0,0.6);
   }
   .hud-val {
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 900;
     text-shadow: 0 2px 4px rgba(0,0,0,0.5);
   }
   /* Bouncing Streak Flame Badge */
   #streak-badge {
-    background: linear-gradient(135deg, rgba(255, 102, 0, 0.4), rgba(255, 51, 102, 0.5));
+    background: linear-gradient(135deg, rgba(255, 102, 0, 0.45), rgba(255, 51, 102, 0.55));
     border: 2px solid #FF8800;
     border-radius: 18px;
-    padding: 5px 10px;
+    padding: 4px 8px;
     color: #FFF;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 900;
-    letter-spacing: 0.5px;
     box-shadow: 0 0 14px rgba(255, 136, 0, 0.6);
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     transition: opacity 0.2s, transform 0.2s;
   }
   #streak-badge.hidden {
@@ -131,17 +158,17 @@
   }
   @keyframes streakAnim {
     0% { transform: scale(0.9); }
-    50% { transform: scale(1.22); }
+    50% { transform: scale(1.2); }
     100% { transform: scale(1.0); }
   }
-  /* In-Game Action Buttons (Mute & Restart) */
+  /* In-Game Quick Restart Button */
   .hud-btn {
     background: rgba(255, 255, 255, 0.16);
     backdrop-filter: blur(8px);
     border: 2px solid rgba(255, 255, 255, 0.28);
     border-radius: 50%;
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -164,7 +191,8 @@
     from { transform: scale(1); }
     to { transform: scale(1.1); }
   }
-  /* Translucent Glass Screens Overlay so Opening Birds are Visible */
+
+  /* SCREEN OVERLAYS */
   .screen-overlay {
     position: absolute;
     inset: 0;
@@ -216,7 +244,6 @@
     letter-spacing: 0.5px;
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
   }
-  /* High Score Pill on Start Screen */
   .highscore-banner {
     background: rgba(255, 215, 0, 0.15);
     border: 1.5px solid rgba(255, 215, 0, 0.4);
@@ -280,7 +307,6 @@
     color: rgba(255, 255, 255, 0.35);
     letter-spacing: 0.5px;
   }
-  /* Game Over Stat Card */
   .stat-card {
     background: rgba(255, 255, 255, 0.12);
     backdrop-filter: blur(10px);
@@ -338,9 +364,12 @@
   <!-- Interactive Canvas -->
   <canvas id="gameCanvas"></canvas>
 
+  <!-- ALWAYS-VISIBLE FLOATING SOUND TOGGLE BUTTON (TOP RIGHT) -->
+  <button id="btn-sound-toggle" title="Toggle Sound">🔊</button>
+
   <!-- Live In-Game HUD -->
   <div id="hud">
-    <!-- Left Group: Score + Dynamic Streak Flame -->
+    <!-- Left: Score + Bouncing Streak Badge -->
     <div class="hud-group">
       <div class="hud-badge" id="score-badge">
         <span class="hud-label">SCORE</span>
@@ -351,7 +380,7 @@
       </div>
     </div>
 
-    <!-- Center Group: Flock count + Match Timer -->
+    <!-- Center/Right: Flock + Timer + Quick Restart -->
     <div class="hud-group">
       <div class="hud-badge" id="flock-badge">
         <span class="hud-label">FLOCK</span>
@@ -361,16 +390,11 @@
         <span class="hud-label">TIME</span>
         <span class="hud-val" id="hud-time">60</span>
       </div>
-    </div>
-
-    <!-- Right Group: Quick Restart & Sound Toggle Buttons -->
-    <div class="hud-group">
       <button class="hud-btn" id="btn-quick-restart" title="Quick Restart">↺</button>
-      <button class="hud-btn" id="btn-mute-toggle" title="Toggle Sound">🔊</button>
     </div>
   </div>
 
-  <!-- Start Screen with Opening Bird Showcase & RoyalArcade branding -->
+  <!-- Start Screen with Opening Bird Showcase -->
   <div id="screen-start" class="screen-overlay">
     <div class="studio-tag">ROYAL ARCADE PRESENTS</div>
     <h1 class="game-title">SKY BURST</h1>
@@ -626,19 +650,16 @@ class Bird {
 
     const wingY = Math.sin(this.flap) * 12;
 
-    // Wing
     c.fillStyle = this.isGold ? '#FFA500' : (this.color === '#00F0FF' ? '#0088FF' : '#CC0044');
     c.beginPath();
     c.ellipse(-4, -wingY, 14, 7, Math.PI / 4, 0, Math.PI * 2);
     c.fill();
 
-    // Body
     c.fillStyle = this.color;
     c.beginPath();
     c.ellipse(0, 0, this.radius, this.radius * 0.72, 0, 0, Math.PI * 2);
     c.fill();
 
-    // Eye
     c.fillStyle = '#FFFFFF';
     c.beginPath();
     c.arc(8, -4, 6, 0, Math.PI * 2);
@@ -649,7 +670,6 @@ class Bird {
     c.arc(10, -4, 3, 0, Math.PI * 2);
     c.fill();
 
-    // Beak
     c.fillStyle = '#FF9900';
     c.beginPath();
     c.moveTo(this.radius - 2, -2);
@@ -724,7 +744,6 @@ class FloatingText {
   }
 }
 
-// Spawns a natural bird
 function spawnBird(x, y, parentVx = null, parentVy = null, isChild = false, forceGold = false) {
   const w = wrapper.clientWidth;
   const h = wrapper.clientHeight;
@@ -751,17 +770,15 @@ function spawnBird(x, y, parentVx = null, parentVy = null, isChild = false, forc
   birds.push(new Bird(spawnX, spawnY, vx, vy, isGold));
 }
 
-// Spawns opening flock for start menu
 function initOpeningFlock() {
   birds = [];
-  spawnBird(undefined, undefined, null, null, false, true); // 1 Golden Starling
+  spawnBird(undefined, undefined, null, null, false, true);
   for (let i = 0; i < 4; i++) {
     spawnBird();
   }
   document.getElementById('hud-flock').textContent = birds.length;
 }
 
-// In-Game Flock
 function initFlock() {
   birds = [];
   const cfg = MODES[currentMode];
@@ -771,7 +788,6 @@ function initFlock() {
   document.getElementById('hud-flock').textContent = birds.length;
 }
 
-// Tap Handling
 function handleTap(clientX, clientY) {
   if (!isRunning) return;
   sfx.init();
@@ -872,7 +888,6 @@ canvas.addEventListener('pointerdown', (e) => {
   handleTap(e.clientX, e.clientY);
 });
 
-// Periodic Speed Decay & Animation Loop
 let lastDecayTime = 0;
 
 function update(time) {
@@ -883,7 +898,6 @@ function update(time) {
     if (s.y > wrapper.clientHeight) s.y = 0;
   });
 
-  // Calm gliding speed on start screen, full dynamic speed in match
   const activeSpeed = isRunning ? currentSpeedMultiplier : 0.85;
 
   if (isRunning) {
@@ -937,7 +951,6 @@ function render() {
     ctx.fill();
   });
 
-  // Mountain Silhouettes
   ctx.fillStyle = 'rgba(20, 8, 45, 0.65)';
   ctx.beginPath();
   ctx.moveTo(0, h);
@@ -949,10 +962,7 @@ function render() {
   ctx.closePath();
   ctx.fill();
 
-  // Draw Birds
   birds.forEach(b => b.draw(ctx));
-
-  // Draw Particles & Floating Texts
   particles.forEach(p => p.draw(ctx));
   floatingTexts.forEach(ft => ft.draw(ctx));
 
@@ -966,23 +976,20 @@ function loop(time) {
 }
 requestAnimationFrame(loop);
 
-// Spawn birds immediately on startup
 initOpeningFlock();
 
-// HUD Updater
 function updateHUD() {
   document.getElementById('hud-score').textContent = score;
   document.getElementById('hud-flock').textContent = birds.length;
   document.getElementById('hud-time').textContent = timeLeft;
 
-  // Streak Flame Management
   const streakBadge = document.getElementById('streak-badge');
   const streakVal = document.getElementById('streak-val');
   if (currentStreak >= 2) {
     streakVal.textContent = `x${currentStreak}`;
     streakBadge.classList.remove('hidden');
     streakBadge.classList.remove('streak-pulse');
-    void streakBadge.offsetWidth; // Trigger reflow
+    void streakBadge.offsetWidth;
     streakBadge.classList.add('streak-pulse');
   } else {
     streakBadge.classList.add('hidden');
@@ -996,7 +1003,6 @@ function updateHUD() {
   }
 }
 
-// 60-Second Timer
 function startTimer() {
   timeLeft = 60;
   updateHUD();
@@ -1013,7 +1019,6 @@ function startTimer() {
   }, 1000);
 }
 
-// Game Flow
 function startGame() {
   sfx.init();
   score = 0;
@@ -1036,7 +1041,6 @@ function endGame() {
   isRunning = false;
   const accuracy = shotsTotal > 0 ? Math.round((shotsHit / shotsTotal) * 100) : 0;
 
-  // Check and save High Score
   const alertEl = document.getElementById('new-record-alert');
   if (score > bestScore) {
     bestScore = score;
@@ -1065,19 +1069,20 @@ function endGame() {
 document.getElementById('btn-start').addEventListener('click', startGame);
 document.getElementById('btn-retry').addEventListener('click', startGame);
 
-// Quick Restart Button
 document.getElementById('btn-quick-restart').addEventListener('click', (e) => {
   e.stopPropagation();
   startGame();
 });
 
-// Sound Mute Toggle
-document.getElementById('btn-mute-toggle').addEventListener('click', (e) => {
+// Sound Toggle Listener
+const soundBtn = document.getElementById('btn-sound-toggle');
+soundBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   sfx.init();
   const muted = sfx.toggleMute();
-  document.getElementById('btn-mute-toggle').textContent = muted ? '🔇' : '🔊';
+  soundBtn.textContent = muted ? '🔇' : '🔊';
 });
+soundBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
 
 document.querySelectorAll('.mode-btn').forEach(btn => {
   btn.addEventListener('click', (e) => {
@@ -1087,7 +1092,6 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
   });
 });
 
-// Instagram / Web Share
 document.getElementById('btn-share').addEventListener('click', async () => {
   const shareText = `🚀 I just scored ${score} pts in Sky Burst on RoyalArcade! (Best: ${bestScore} pts). Can you beat my streak? Play now:`;
   const url = 'https://royalarcade.github.io';
